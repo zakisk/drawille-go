@@ -209,9 +209,9 @@ func (c *Canvas) DrawPolygon(center_x,center_y,sides,radius float64) {
     a := float64(n)*degree
     b := float64(n+1)*degree
     x1 := int((center_x+math.Cos((math.Pi/180)*a))*(radius+1)/2+0.5)
-    y1 := int((center_x+math.Sin((math.Pi/180)*a))*(radius+1)/2+0.5)
+    y1 := int((center_y+math.Sin((math.Pi/180)*a))*(radius+1)/2+0.5)
     x2 := int((center_x+math.Cos((math.Pi/180)*b))*(radius+1)/2+0.5)
-    y2 := int((center_x+math.Sin((math.Pi/180)*b))*(radius+1)/2+0.5)
+    y2 := int((center_y+math.Sin((math.Pi/180)*b))*(radius+1)/2+0.5)
     c.DrawLine(x1,y1,x2,y2)
   }
 }
