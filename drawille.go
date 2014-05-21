@@ -32,7 +32,7 @@ type Canvas struct{
   chars map[int]map[int]int
 }
 
-// Make a new canvas with w columns and h rows
+// Make a new canvas
 func NewCanvas() Canvas {
   c := Canvas{LineEnding:"\n"}
   c.Clear()
@@ -46,7 +46,7 @@ func (c Canvas) MaxY() int {
       max = k
     }
   }
-  return max
+  return max*4
 }
 
 func (c Canvas) MinY() int {
@@ -56,7 +56,7 @@ func (c Canvas) MinY() int {
       min = k
     }
   }
-  return min
+  return min*4
 }
 
 func (c Canvas) MaxX() int {
@@ -68,7 +68,7 @@ func (c Canvas) MaxX() int {
       }
     }
   }
-  return max
+  return max*2
 }
 
 func (c Canvas) MinX() int {
@@ -80,7 +80,7 @@ func (c Canvas) MinX() int {
       }
     }
   }
-  return min
+  return min*2
 }
 
 // Clear all pixels
@@ -113,7 +113,7 @@ func (c *Canvas) UnSet(x,y int) {
   }
   c.chars[py][px] = c.chars[py][px]&^getPixel(y,x)
 }
-
+// Toggle a point
 func (c *Canvas) Toggle(x,y int) {
   px,py := c.get_pos(x,y)
   if (c.chars[py][px] & getPixel(y,x)) != 0 {
@@ -134,6 +134,7 @@ func (c *Canvas) SetText(x,y int, text string) {
   }
 }
 
+// Get pixel at the given coordinates
 func (c Canvas) Get(x,y int) bool {
   dot_index := pixel_map[y%4][x%2]
   x,y = x/2,y/4
@@ -141,6 +142,7 @@ func (c Canvas) Get(x,y int) bool {
   return (char & dot_index) != 0
 }
 
+// Retrieve the rows from a given view
 func (c Canvas) Rows(minX,minY,maxX,maxY int) []string {
   minrow,maxrow := minY/4,(maxY)/4
   mincol,maxcol := minX/2,(maxX)/2
@@ -157,6 +159,7 @@ func (c Canvas) Rows(minX,minY,maxX,maxY int) []string {
   return ret
 }
 
+// Retrieve a string representation of the frame at the given parameters
 func (c Canvas) Frame(minX,minY,maxX,maxY int) string {
   var ret string
   for _,row := range c.Rows(minX,minY,maxX,maxY) {
@@ -166,7 +169,11 @@ func (c Canvas) Frame(minX,minY,maxX,maxY int) string {
   return ret
 }
 
-func Line(x1,y1, x2,y2 int) ([]int,[]int) {
+func (c Canvas) String() string {
+  return c.Frame(c.MinX(),c.MinY(),c.MaxX(),c.MaxY())
+}
+
+func (c *Canvas) DrawLine(x1,y1, x2,y2 int) {
   xdiff := math.Abs(float64(x1-x2))
   ydiff := math.Abs(float64(y2-y1))
   
@@ -184,9 +191,6 @@ func Line(x1,y1, x2,y2 int) ([]int,[]int) {
   
   r := math.Max(xdiff, ydiff)
   
-  retx := make([]int,0)
-  rety := make([]int,0)
-  
   for i:=0;i<int(r)+1;i=i+1 {
     x,y := float64(x1),float64(y1)
     if ydiff != 0 {
@@ -195,26 +199,19 @@ func Line(x1,y1, x2,y2 int) ([]int,[]int) {
     if xdiff != 0 {
       x += (float64(i)*xdiff)/(r*xdir)
     }
-    retx = append(retx,int(x))
-    rety = append(rety,int(y))
+    c.Toggle(int(x+0.5),int(y+0.5))
   }
-  return retx,rety
 }
 
-func Polygon(center_x,center_y,sides,radius float64) ([]int,[]int) {
+func (c *Canvas) DrawPolygon(center_x,center_y,sides,radius float64) {
   degree := 360/sides
-  retx := make([]int,0)
-  rety := make([]int,0)
   for n:=0;n<int(sides);n=n+1 {
     a := float64(n)*degree
     b := float64(n+1)*degree
-    x1 := int((center_x+math.Cos((math.Pi/180)*a))*(radius+1)/2)
-    y1 := int((center_x+math.Sin((math.Pi/180)*a))*(radius+1)/2)
-    x2 := int((center_x+math.Cos((math.Pi/180)*b))*(radius+1)/2)
-    y2 := int((center_x+math.Sin((math.Pi/180)*b))*(radius+1)/2)
-    linex,liney := Line(x1,y1,x2,y2)
-    retx = append(retx,linex...)
-    rety = append(rety,liney...)
+    x1 := int((center_x+math.Cos((math.Pi/180)*a))*(radius+1)/2+0.5)
+    y1 := int((center_x+math.Sin((math.Pi/180)*a))*(radius+1)/2+0.5)
+    x2 := int((center_x+math.Cos((math.Pi/180)*b))*(radius+1)/2+0.5)
+    y2 := int((center_x+math.Sin((math.Pi/180)*b))*(radius+1)/2+0.5)
+    c.DrawLine(x1,y1,x2,y2)
   }
-  return retx,rety
 }
