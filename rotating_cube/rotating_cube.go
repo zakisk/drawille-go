@@ -156,8 +156,8 @@ func run(projection bool) {
 
 func main() {
 	projection := false
-	if len(os.Args) > 0 {
-		if os.Args[0] == "-p" {
+	if len(os.Args) > 1 {
+		if os.Args[1] == "-p" {
 			projection = true
 		}
 	}
