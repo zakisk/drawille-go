@@ -173,9 +173,9 @@ func (c Canvas) String() string {
   return c.Frame(c.MinX(),c.MinY(),c.MaxX(),c.MaxY())
 }
 
-func (c *Canvas) DrawLine(x1,y1, x2,y2 int) {
-  xdiff := math.Abs(float64(x1-x2))
-  ydiff := math.Abs(float64(y2-y1))
+func (c *Canvas) DrawLine(x1,y1, x2,y2 float64) {
+  xdiff := math.Abs(x1-x2)
+  ydiff := math.Abs(y2-y1)
   
   var xdir,ydir float64
   if x1 <= x2 {
@@ -191,15 +191,15 @@ func (c *Canvas) DrawLine(x1,y1, x2,y2 int) {
   
   r := math.Max(xdiff, ydiff)
   
-  for i:=0;i<int(r)+1;i=i+1 {
-    x,y := float64(x1),float64(y1)
+  for i:=0;i<round(r)+1;i=i+1 {
+    x,y := x1,y1
     if ydiff != 0 {
       y += (float64(i)*ydiff)/(r*ydir)
     }
     if xdiff != 0 {
       x += (float64(i)*xdiff)/(r*xdir)
     }
-    c.Toggle(int(x+0.5),int(y+0.5))
+    c.Toggle(round(x),round(y))
   }
 }
 
@@ -208,10 +208,20 @@ func (c *Canvas) DrawPolygon(center_x,center_y,sides,radius float64) {
   for n:=0;n<int(sides);n=n+1 {
     a := float64(n)*degree
     b := float64(n+1)*degree
-    x1 := int((center_x+math.Cos((math.Pi/180)*a))*(radius+1)/2+0.5)
-    y1 := int((center_y+math.Sin((math.Pi/180)*a))*(radius+1)/2+0.5)
-    x2 := int((center_x+math.Cos((math.Pi/180)*b))*(radius+1)/2+0.5)
-    y2 := int((center_y+math.Sin((math.Pi/180)*b))*(radius+1)/2+0.5)
+    
+    x1 := (center_x+(math.Cos(radians(a))*(radius/2+1)))
+    y1 := (center_y+(math.Sin(radians(a))*(radius/2+1)))
+    x2 := (center_x+(math.Cos(radians(b))*(radius/2+1)))
+    y2 := (center_y+(math.Sin(radians(b))*(radius/2+1)))
+    
     c.DrawLine(x1,y1,x2,y2)
   }
+}
+
+func radians(d float64) float64 {
+  return d*(math.Pi/180)
+}
+
+func round(x float64) int {
+  return int(x+0.5)
 }
