@@ -143,6 +143,16 @@ func (c Canvas) Get(x, y int) bool {
 	return (char & dot_index) != 0
 }
 
+// Get character at the given screen coordinates
+func (c Canvas) GetScreenCharacter(x, y int) rune {
+	return rune(c.chars[y][x] + braille_char_offset)
+}
+
+// Get character for the given pixel
+func (c Canvas) GetCharacter(x, y int) rune {
+	return c.GetScreenCharacter(x/4,y/4)
+}
+
 // Retrieve the rows from a given view
 func (c Canvas) Rows(minX, minY, maxX, maxY int) []string {
 	minrow, maxrow := minY/4, (maxY)/4
