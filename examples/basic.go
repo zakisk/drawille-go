@@ -1,46 +1,87 @@
 package main
 
 import (
-  "github.com/exrook/drawille-go"
-  "math"
-  "fmt"
+	"fmt"
+	"math"
+	"time"
+
+	"github.com/chriskim06/drawille-go"
 )
 
-func main() {
-  s := drawille.NewCanvas()
-  for x:=0;x<(1800);x=x+1 {
-    y := int(math.Sin((math.Pi/180)*float64(x))*10+0.5)
-    s.Set(x/10,y)
-  }
-  fmt.Print(s)
-  
-  s.Clear()
-  
-  for x:=0;x<1800;x=x+10 {
-    s.Set(x/10,int(10+math.Sin((math.Pi/180)*float64(x))*10+0.5))
-    s.Set(x/10,int(10+math.Cos((math.Pi/180)*float64(x))*10+0.5))
-  }
-  fmt.Print(s)
-  
-  s.Clear()
-  
-  for x:=0;x<3600;x=x+20 {
-    s.Set(x/20,int(4+math.Sin((math.Pi/180)*float64(x))*4))
-  }  
-  fmt.Print(s)
-  
-  s.Clear()
+var t = time.Now()
+var rad = -1
 
-  for x:=0;x<360;x=x+1 {
-    s.Set(x/4,int(30+math.Sin((math.Pi/180)*float64(x))*30))
-  }
-  
-  for x:=0;x<30;x=x+1 {
-    for y:=0;y<30;y=y+1 {
-      s.Set(x,y)
-      s.Toggle(x+30,y+30)
-      s.Toggle(x+60,y)
-    }
-  }
-  fmt.Print(s)
+func sindata() float64 {
+	rad++
+	return 2 * math.Sin((math.Pi/9)*float64(rad))
+}
+
+func main() {
+	s := drawille.NewCanvas(103, 25)
+	s.LineColors = []drawille.Color{
+		drawille.Red,
+		drawille.RoyalBlue,
+	}
+	s.LabelColor = drawille.Purple
+	s.AxisColor = drawille.SeaGreen
+	s.NumDataPoints = 50
+
+	i := 0
+	labels := []string{}
+	data := [][]float64{{}, {}}
+	for x := 0; x < 16; x++ {
+		data[0] = append(data[0], 3)
+		data[1] = append(data[1], sindata())
+		update(i, &labels)
+		i++
+	}
+	fmt.Println(data[1])
+	s.HorizontalLabels = labels
+	fmt.Print(s.Plot(data))
+	fmt.Println()
+	for x := 0; x < 20; x++ {
+		data[0] = append(data[0], 3)
+		data[1] = append(data[1], sindata())
+		update(i, &labels)
+		i++
+	}
+	s.HorizontalLabels = labels
+	fmt.Print(s.Plot(data))
+	fmt.Println()
+	for x := 0; x < 18; x++ {
+		data[0] = append(data[0], 3)
+		data[1] = append(data[1], sindata())
+		update(i, &labels)
+		i++
+	}
+	s.HorizontalLabels = labels
+	fmt.Print(s.Plot(data))
+	fmt.Println()
+	//	for x := 0; x < 7; x++ {
+	//	    data[0] = append(data[0], 256)
+	//	    data[1] = append(data[1], 17)
+	//	    update(i, &labels)
+	//	    i++
+	//	}
+	//
+	// labels = labels[7:]
+	// data[0] = data[0][7:]
+	// data[1] = data[1][7:]
+	//
+	//	for x := 0; x < 18; x++ {
+	//	    data[0] = append(data[0], 355)
+	//	    data[1] = append(data[1], 17)
+	//	    update(i, &labels)
+	//	    i++
+	//	}
+	//
+	// s.HorizontalLabels = labels
+	// fmt.Print(s.Plot(data))
+	// fmt.Println()
+}
+
+func update(i int, labels *[]string) {
+	ti := t.Add(time.Second)
+	t = ti
+	*labels = append(*labels, fmt.Sprintf("%02d:%02d:%02d", ti.Hour(), ti.Minute(), ti.Second()))
 }
