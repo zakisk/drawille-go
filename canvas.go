@@ -7,7 +7,9 @@ import (
 	"strings"
 )
 
-// Canvas is a plot of braille characters
+// Canvas is the container for a series of plots
+// Vertical labels are shown by default and a starting
+// and ending horizontal label can optionally be shown
 type Canvas struct {
 	// various settings accessible outside this object
 	LineColors []Color
@@ -15,7 +17,7 @@ type Canvas struct {
 	AxisColor  Color
 	ShowAxis   bool
 
-	// a list of labels the canvas will print for the x and y axis
+	// a list of labels the canvas will print for the x axis
 	// horizontal labels must be provided by the caller. too lazy
 	// to come up with a good way to print stuff so offloading some
 	// of that work to the user. when the horizontal labels arent
@@ -29,26 +31,35 @@ type Canvas struct {
 	// 100 points of data. if we only want to plot 50 data points
 	// then the horizontal scale needs to be 2 in order to utilize
 	// the whole graphable area. since image uses ints for points
-	// the graphing gets a little weird. ex:
-	// graphable area = 88
-	// num of data points = 50
-	// horizontal scale = 88/50 = 1.76
-	// 0, 1.76, 3.52, 5.28, 7.04, 8.8, 10.56, 12.32, 14.08
-	// this would map points at 0,1,3,5,7,8,10,12,14
+	// the graphing gets a little weird at times due to rounding.
 	NumDataPoints int
 
 	// the bounds of the canvas
 	area image.Rectangle
 
-	plotWidth   int
+	// the width of the graphable area in terms of braille dots
+	// so 2 * (rectangle width - offset)
+	plotWidth int
+
+	// the number of usable rows in the canvas. this is decremented
+	// when the x axis is drawn and when there are horizontal labels
 	graphHeight int
 
 	// a map of the entire braille grid
 	points map[image.Point]Cell
 
+	// number of columns from the left the plot starts at. this is the
+	// width of the y axis and the longest label
 	horizontalOffset int
-	horizontalScale  float64
-	maxX             int
+
+	// this defaults to 1 unless NumDataPoints is specified, in which case
+	// the horizontal scale is the plot width (braille dots) divided by
+	// NumDataPoints and rounded
+	horizontalScale float64
+
+	// this is the furthest column that has been plotted in the canvas
+	// used to help with the horizontal labels
+	maxX int
 }
 
 // NewCanvas creates a default canvas
@@ -143,6 +154,10 @@ func (c *Canvas) Fill(data [][]float64) {
 		axisRunes := []rune{ORIGIN}
 		remaining := c.plotWidth / 2
 		if len(c.HorizontalLabels) != 0 && len(c.HorizontalLabels) <= remaining {
+			// always print the starting label then figure out if theres enough space
+			// to print the ending label. the length of the longest plot needs to be at
+			// least the length of the two labels plus 2 spaces for padding between plus
+			// 2 for the unicode line characters printed next to them.
 			start := c.HorizontalLabels[0]
 			end := c.HorizontalLabels[len(c.HorizontalLabels)-1]
 			c.setRunes(c.graphHeight+1, c.horizontalOffset, c.AxisColor, LABELSTART)
