@@ -104,8 +104,8 @@ func (c *Canvas) Fill(data [][]float64) {
 		cur := minDataPoint
 		for i := c.graphHeight - 1; i >= 0; i-- {
 			val := fmt.Sprintf("%.2f", cur)
-			c.setText(i, lenMaxDataPoint-len(val), val, c.LabelColor)
-			c.setRunes(i, lenMaxDataPoint+1, c.AxisColor, YAXIS)
+			c.setRunes(i, lenMaxDataPoint-len(val), c.LabelColor, NO_OFFSET, []rune(val)...)
+			c.setRunes(i, lenMaxDataPoint+1, c.AxisColor, LINE_OFFSET, YAXIS)
 			cur += verticalScale
 		}
 	}
@@ -160,22 +160,22 @@ func (c *Canvas) Fill(data [][]float64) {
 			// 2 for the unicode line characters printed next to them.
 			start := c.HorizontalLabels[0]
 			end := c.HorizontalLabels[len(c.HorizontalLabels)-1]
-			c.setRunes(c.graphHeight+1, c.horizontalOffset, c.AxisColor, LABELSTART)
-			c.setText(c.graphHeight+1, c.horizontalOffset+1, start, c.LabelColor)
+			c.setRunes(c.graphHeight+1, c.horizontalOffset, c.AxisColor, LINE_OFFSET, LABELSTART)
+			c.setRunes(c.graphHeight+1, c.horizontalOffset+1, c.LabelColor, NO_OFFSET, []rune(start)...)
 			axisRunes = append(axisRunes, XLABELMARKER)
 			remaining--
 			minWidth := len(start) + len(end) + 4
 			if c.maxX >= minWidth {
 				labelPos := c.horizontalOffset + 1 + len(start) + c.maxX - minWidth + 2
-				c.setText(c.graphHeight+1, labelPos, end, c.LabelColor)
-				c.setRunes(c.graphHeight+1, labelPos+len(end), c.AxisColor, LABELEND)
+				c.setRunes(c.graphHeight+1, labelPos, c.LabelColor, NO_OFFSET, []rune(end)...)
+				c.setRunes(c.graphHeight+1, labelPos+len(end), c.AxisColor, LINE_OFFSET, LABELEND)
 				axisRunes = append(axisRunes, repeatRune(XAXIS, c.maxX-2)...)
 				axisRunes = append(axisRunes, XLABELMARKER)
 				remaining -= c.maxX + 1
 			}
 		}
 		axisRunes = append(axisRunes, repeatRune(XAXIS, remaining)...)
-		c.setRunes(c.graphHeight, c.horizontalOffset-1, c.AxisColor, axisRunes...)
+		c.setRunes(c.graphHeight, c.horizontalOffset-1, c.AxisColor, LINE_OFFSET, axisRunes...)
 	}
 }
 
@@ -205,25 +205,13 @@ func (c Canvas) String() string {
 	return b.String()
 }
 
-func (c *Canvas) setText(row, col int, text string, color Color) {
-	for i, letter := range text {
-		if p := image.Pt(col+i, row); p.In(c.area) {
-			c.points[p] = Cell{
-				Rune:   letter,
-				color:  color,
-				letter: true,
-			}
-		}
-	}
-}
-
-func (c *Canvas) setRunes(row, col int, color Color, runes ...rune) {
+func (c *Canvas) setRunes(row, col int, color Color, offset rune, runes ...rune) {
 	for i, r := range runes {
 		if p := image.Pt(col+i, row); p.In(c.area) {
 			c.points[p] = Cell{
-				Rune:  r,
-				color: color,
-				axis:  true,
+				Rune:   r,
+				offset: offset,
+				color:  color,
 			}
 		}
 	}
@@ -238,8 +226,9 @@ func (c *Canvas) setPoint(p image.Point, color Color) {
 		c.maxX = x
 	}
 	c.points[point] = Cell{
-		Rune:  c.points[point].Rune | BRAILLE[p.Y%4][p.X%2],
-		color: color,
+		Rune:   c.points[point].Rune | BRAILLE[p.Y%4][p.X%2],
+		offset: BRAILLE_OFFSET,
+		color:  color,
 	}
 }
 

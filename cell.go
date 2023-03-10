@@ -3,6 +3,7 @@ package drawille
 const (
 	BRAILLE_OFFSET = '\u2800'
 	LINE_OFFSET    = '\u2500'
+	NO_OFFSET      = '\u0000'
 )
 
 var BRAILLE = [4][2]rune{
@@ -24,21 +25,14 @@ const (
 // Cell represents the braille character at some coordinate in the canvas
 type Cell struct {
 	Rune   rune
+	offset rune
 	color  Color
-	letter bool
-	axis   bool
 }
 
 // String returns the cell's rune wrapped in the color escape strings
 func (c Cell) String() string {
-	offset := BRAILLE_OFFSET
-	if c.axis {
-		offset = LINE_OFFSET
-	} else if c.letter {
-		offset = 0
-	}
-	if c.Rune+offset == 0 {
+	if c.Rune+c.offset == 0 {
 		return wrap(" ", c.color)
 	}
-	return wrap(string(c.Rune+offset), c.color)
+	return wrap(string(c.Rune+c.offset), c.color)
 }
