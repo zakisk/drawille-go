@@ -208,33 +208,19 @@ func (c Canvas) String() string {
 func (c *Canvas) setRunes(row, col int, color Color, offset rune, runes ...rune) {
 	for i, r := range runes {
 		if p := image.Pt(col+i, row); p.In(c.area) {
-			c.points[p] = Cell{
-				Rune:   r,
-				offset: offset,
-				color:  color,
-			}
+			c.points[p] = NewCell(r, offset, color)
 		}
 	}
 }
 
-func (c *Canvas) setPoint(p image.Point, color Color) {
-	point := image.Pt(p.X/2, p.Y/4)
-	if !point.In(c.area) {
-		return
-	}
-	if x := point.X - c.horizontalOffset + 1; x > c.maxX {
-		c.maxX = x
-	}
-	c.points[point] = Cell{
-		Rune:   c.points[point].Rune | BRAILLE[p.Y%4][p.X%2],
-		offset: BRAILLE_OFFSET,
-		color:  color,
-	}
-}
-
 func (c *Canvas) setLine(p0, p1 image.Point, color Color) {
-	for _, p := range line(p0, p1) {
-		c.setPoint(p, color)
+	for _, point := range line(p0, p1) {
+		if p := image.Pt(point.X/2, point.Y/4); p.In(c.area) {
+			if x := point.X - c.horizontalOffset + 1; x > c.maxX {
+				c.maxX = x
+			}
+			c.points[p] = NewCell(c.points[p].Rune|BRAILLE[point.Y%4][point.X%2], BRAILLE_OFFSET, color)
+		}
 	}
 }
 

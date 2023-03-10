@@ -29,6 +29,14 @@ type Cell struct {
 	color  Color
 }
 
+func NewCell(r, offset rune, color Color) Cell {
+	return Cell{
+		Rune:   r,
+		offset: offset,
+		color:  color,
+	}
+}
+
 // String returns the cell's rune wrapped in the color escape strings
 func (c Cell) String() string {
 	if c.Rune+c.offset == 0 {
