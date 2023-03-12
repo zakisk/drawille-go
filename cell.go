@@ -24,14 +24,14 @@ const (
 
 // Cell represents the braille character at some coordinate in the canvas
 type Cell struct {
-	Rune   rune
+	val    rune
 	offset rune
 	color  Color
 }
 
 func NewCell(r, offset rune, color Color) Cell {
 	return Cell{
-		Rune:   r,
+		val:    r,
 		offset: offset,
 		color:  color,
 	}
@@ -39,8 +39,8 @@ func NewCell(r, offset rune, color Color) Cell {
 
 // String returns the cell's rune wrapped in the color escape strings
 func (c Cell) String() string {
-	if c.Rune+c.offset == 0 {
-		return wrap(" ", c.color)
+	if c.val+c.offset == 0 {
+		return " "
 	}
-	return wrap(string(c.Rune+c.offset), c.color)
+	return wrap(string(c.val+c.offset), c.color)
 }

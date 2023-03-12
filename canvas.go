@@ -52,11 +52,6 @@ type Canvas struct {
 	// width of the y axis and the longest label
 	horizontalOffset int
 
-	// this defaults to 1 unless NumDataPoints is specified, in which case
-	// the horizontal scale is the plot width (braille dots) divided by
-	// NumDataPoints and rounded
-	horizontalScale float64
-
 	// this is the furthest column that has been plotted in the canvas
 	// used to help with the horizontal labels
 	maxX int
@@ -83,23 +78,20 @@ func (c *Canvas) Fill(data [][]float64) {
 	c.points = make(map[image.Point]Cell)
 	c.graphHeight = c.area.Dy()
 	minDataPoint, maxDataPoint := getMinMaxFloat64From2dSlice(data)
-	diff := maxDataPoint
-	if minDataPoint < 0 {
-		diff -= minDataPoint
-	}
+	diff := maxDataPoint - minDataPoint
 
 	// y axis
 	if c.ShowAxis {
 		c.graphHeight--
+		if len(c.HorizontalLabels) != 0 {
+			c.graphHeight--
+		}
 		lenMaxDataPoint := len(fmt.Sprintf("%.2f", maxDataPoint))
 		lenMinDataPoint := len(fmt.Sprintf("%.2f", minDataPoint))
 		if lenMinDataPoint > lenMaxDataPoint {
 			lenMaxDataPoint = lenMinDataPoint
 		}
 		c.horizontalOffset = lenMaxDataPoint + 2 // y-axis plus space before it
-		if len(c.HorizontalLabels) != 0 && len(c.HorizontalLabels) <= c.area.Dx()-c.horizontalOffset {
-			c.graphHeight--
-		}
 		verticalScale := diff / float64(c.graphHeight-1)
 		cur := minDataPoint
 		for i := c.graphHeight - 1; i >= 0; i-- {
@@ -112,19 +104,17 @@ func (c *Canvas) Fill(data [][]float64) {
 	c.plotWidth = (c.area.Dx() - c.horizontalOffset) * 2
 
 	// plot the data
-	c.horizontalScale = 1.0
+	horizontalScale := 1.0
 	if c.NumDataPoints > 0 {
-		c.horizontalScale = math.Round(float64(c.plotWidth/c.NumDataPoints) + 0.5)
+		horizontalScale = math.Round(float64(c.plotWidth/c.NumDataPoints) + 0.5)
 	}
 	for i, line := range data {
 		if len(line) == 0 {
 			continue
 		} else if c.NumDataPoints > 0 && len(line) > c.NumDataPoints {
-			start := len(line) - c.NumDataPoints
-			line = line[start:]
+			line = line[len(line)-c.NumDataPoints:]
 		} else if len(line) > c.plotWidth {
-			start := len(line) - c.plotWidth
-			line = line[start:]
+			line = line[len(line)-c.plotWidth:]
 		}
 
 		// y coordinates are calculated as percentages of the graph height. the percentage
@@ -136,11 +126,11 @@ func (c *Canvas) Fill(data [][]float64) {
 			height := int(((val - minDataPoint) / diff) * float64(c.graphHeight-1))
 			c.setLine(
 				image.Pt(
-					(c.horizontalOffset*2)+int(float64(j)*c.horizontalScale),
+					(c.horizontalOffset*2)+int(float64(j)*horizontalScale),
 					(c.graphHeight-1-previousHeight)*4,
 				),
 				image.Pt(
-					(c.horizontalOffset*2)+int(float64(j+1)*c.horizontalScale),
+					(c.horizontalOffset*2)+int(float64(j+1)*horizontalScale),
 					(c.graphHeight-1-height)*4,
 				),
 				c.lineColor(i),
@@ -154,10 +144,9 @@ func (c *Canvas) Fill(data [][]float64) {
 		axisRunes := []rune{ORIGIN}
 		remaining := c.plotWidth / 2
 		if len(c.HorizontalLabels) != 0 && len(c.HorizontalLabels) <= remaining {
-			// always print the starting label then figure out if theres enough space
-			// to print the ending label. the length of the longest plot needs to be at
-			// least the length of the two labels plus 2 spaces for padding between plus
-			// 2 for the unicode line characters printed next to them.
+			// always print the starting label then figure out if there's enough space to print the ending label.
+			// the length of the longest plot needs to be at least the length of the two labels plus 2 spaces
+			// for padding between plus 2 for the unicode line characters printed next to them.
 			start := c.HorizontalLabels[0]
 			end := c.HorizontalLabels[len(c.HorizontalLabels)-1]
 			c.setRunes(c.graphHeight+1, c.horizontalOffset, c.AxisColor, LINE_OFFSET, LABELSTART)
@@ -165,13 +154,13 @@ func (c *Canvas) Fill(data [][]float64) {
 			axisRunes = append(axisRunes, XLABELMARKER)
 			remaining--
 			minWidth := len(start) + len(end) + 4
-			if c.maxX >= minWidth {
-				labelPos := c.horizontalOffset + 1 + len(start) + c.maxX - minWidth + 2
+			if length := c.maxX - c.horizontalOffset; length >= minWidth {
+				labelPos := c.horizontalOffset + length - len(end)
 				c.setRunes(c.graphHeight+1, labelPos, c.LabelColor, NO_OFFSET, []rune(end)...)
 				c.setRunes(c.graphHeight+1, labelPos+len(end), c.AxisColor, LINE_OFFSET, LABELEND)
-				axisRunes = append(axisRunes, repeatRune(XAXIS, c.maxX-2)...)
+				axisRunes = append(axisRunes, repeatRune(XAXIS, length-1)...)
 				axisRunes = append(axisRunes, XLABELMARKER)
-				remaining -= c.maxX + 1
+				remaining -= length
 			}
 		}
 		axisRunes = append(axisRunes, repeatRune(XAXIS, remaining)...)
@@ -190,18 +179,24 @@ func (c *Canvas) Plot(data [][]float64) string {
 
 // String allows the Canvas to implement the Stringer interface
 func (c Canvas) String() string {
-	var b strings.Builder
+	if len(c.points) == 0 {
+		return ""
+	}
 
 	// go through each row of the canvas and print the lines
+	var b strings.Builder
 	for row := 0; row < c.area.Dy(); row++ {
 		for col := 0; col < c.area.Dx(); col++ {
-			b.WriteString(c.points[image.Pt(col, row)].String())
+			if cell, ok := c.points[image.Pt(col, row)]; ok {
+				b.WriteString(cell.String())
+			} else {
+				b.WriteString(" ")
+			}
 		}
 		if row < c.area.Dy()-1 {
 			b.WriteString("\n")
 		}
 	}
-
 	return b.String()
 }
 
@@ -214,18 +209,18 @@ func (c *Canvas) setRunes(row, col int, color Color, offset rune, runes ...rune)
 }
 
 func (c *Canvas) setLine(p0, p1 image.Point, color Color) {
-	for _, point := range line(p0, p1) {
-		if p := image.Pt(point.X/2, point.Y/4); p.In(c.area) {
-			if x := point.X - c.horizontalOffset + 1; x > c.maxX {
-				c.maxX = x
+	for _, pt := range line(p0, p1) {
+		if p := image.Pt(pt.X/2, pt.Y/4); p.In(c.area) {
+			if p.X > c.maxX {
+				c.maxX = p.X
 			}
-			c.points[p] = NewCell(c.points[p].Rune|BRAILLE[point.Y%4][point.X%2], BRAILLE_OFFSET, color)
+			c.points[p] = NewCell(c.points[p].val|BRAILLE[pt.Y%4][pt.X%2], BRAILLE_OFFSET, color)
 		}
 	}
 }
 
 func (c Canvas) lineColor(i int) Color {
-	if len(c.LineColors) == 0 || i > len(c.LineColors)-1 {
+	if len(c.LineColors) <= 0 || i >= len(c.LineColors) {
 		return Default
 	}
 	return c.LineColors[i]
