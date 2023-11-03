@@ -71,13 +71,12 @@ func NewCanvas(width, height int) Canvas {
 }
 
 // Fill adds values to the Canvas
-func (c *Canvas) Fill(data [][]float64) {
+func (c *Canvas) Fill(data [][]float64, minDataPoint, maxDataPoint float64) {
 	if len(data) == 0 {
 		return
 	}
 	c.points = make(map[image.Point]Cell)
 	c.graphHeight = c.area.Dy()
-	minDataPoint, maxDataPoint := getMinMaxFloat64From2dSlice(data)
 	diff := maxDataPoint - minDataPoint
 
 	// y axis
@@ -173,7 +172,16 @@ func (c *Canvas) Plot(data [][]float64) string {
 	if len(data) == 0 {
 		return ""
 	}
-	c.Fill(data)
+	minDataPoint, maxDataPoint := getMinMaxFloat64From2dSlice(data)
+	c.Fill(data, minDataPoint, maxDataPoint)
+	return c.String()
+}
+
+func (c *Canvas) PlotWithMinAndMax(data [][]float64, minDataPoint, maxDataPoint float64) string {
+	if len(data) == 0 {
+		return ""
+	}
+	c.Fill(data, minDataPoint, maxDataPoint)
 	return c.String()
 }
 
