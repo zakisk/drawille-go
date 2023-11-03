@@ -70,6 +70,27 @@ func NewCanvas(width, height int) Canvas {
 	return c
 }
 
+// NewCanvasXY creates a canvas with specified x and y coordinates
+func NewCanvasXY(width, height int, x, y int) Canvas {
+	if x < 0 {
+		x = 0
+	}
+
+	if y < 0 {
+		y = 0
+	}
+
+	c := Canvas{
+		AxisColor:  Default,
+		LabelColor: Default,
+		LineColors: []Color{},
+		ShowAxis:   true,
+		area:       image.Rect(x, y, width, height),
+		points:     make(map[image.Point]Cell),
+	}
+	return c
+}
+
 // Fill adds values to the Canvas
 func (c *Canvas) Fill(data [][]float64, minDataPoint, maxDataPoint float64) {
 	if len(data) == 0 {
@@ -232,4 +253,8 @@ func (c Canvas) lineColor(i int) Color {
 		return Default
 	}
 	return c.LineColors[i]
+}
+
+func (c *Canvas) GetArea() image.Rectangle {
+	return c.area
 }
