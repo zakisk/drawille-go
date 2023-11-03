@@ -5,7 +5,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/chriskim06/drawille-go"
+	"github.com/zakisk/drawille-go"
 )
 
 var t = time.Now()

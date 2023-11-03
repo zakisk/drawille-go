@@ -1,3 +1,3 @@
-module github.com/chriskim06/drawille-go
+module github.com/zakisk/drawille-go
 
 go 1.20
