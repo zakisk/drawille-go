@@ -71,7 +71,7 @@ func NewCanvas(width, height int) Canvas {
 }
 
 // NewCanvasXY creates a canvas with specified x and y coordinates
-func NewCanvasXY(width, height int, x, y int) Canvas {
+func NewCanvasXY(x, y, width, height int) Canvas {
 	if x < 0 {
 		x = 0
 	}
@@ -92,7 +92,7 @@ func NewCanvasXY(width, height int, x, y int) Canvas {
 }
 
 // Fill adds values to the Canvas
-func (c *Canvas) Fill(data [][]float64, minDataPoint, maxDataPoint float64) {
+func (c *Canvas) Fill(data [][]float64, minDataPoint, maxDataPoint float64, noYAxisLabelDecimalPoints bool) {
 	if len(data) == 0 {
 		return
 	}
@@ -106,8 +106,14 @@ func (c *Canvas) Fill(data [][]float64, minDataPoint, maxDataPoint float64) {
 		if len(c.HorizontalLabels) != 0 {
 			c.graphHeight--
 		}
-		lenMaxDataPoint := len(fmt.Sprintf("%.2f", maxDataPoint))
-		lenMinDataPoint := len(fmt.Sprintf("%.2f", minDataPoint))
+		lenMaxDataPoint, lenMinDataPoint := 0, 0
+		if noYAxisLabelDecimalPoints {
+			lenMaxDataPoint = len(fmt.Sprintf("%.0f", maxDataPoint))
+			lenMinDataPoint = len(fmt.Sprintf("%.0f", minDataPoint))
+		} else {
+			lenMaxDataPoint = len(fmt.Sprintf("%.2f", maxDataPoint))
+			lenMinDataPoint = len(fmt.Sprintf("%.2f", minDataPoint))
+		}
 		if lenMinDataPoint > lenMaxDataPoint {
 			lenMaxDataPoint = lenMinDataPoint
 		}
@@ -115,7 +121,12 @@ func (c *Canvas) Fill(data [][]float64, minDataPoint, maxDataPoint float64) {
 		verticalScale := diff / float64(c.graphHeight-1)
 		cur := minDataPoint
 		for i := c.graphHeight - 1; i >= 0; i-- {
-			val := fmt.Sprintf("%.2f", cur)
+			val := ""
+			if noYAxisLabelDecimalPoints {
+				val = fmt.Sprintf("%.2f", cur)
+			} else {
+				val = fmt.Sprintf("%.0f", cur)
+			}
 			c.setRunes(i, lenMaxDataPoint-len(val), c.LabelColor, NO_OFFSET, []rune(val)...)
 			c.setRunes(i, lenMaxDataPoint+1, c.AxisColor, LINE_OFFSET, YAXIS)
 			cur += verticalScale
@@ -194,15 +205,15 @@ func (c *Canvas) Plot(data [][]float64) string {
 		return ""
 	}
 	minDataPoint, maxDataPoint := getMinMaxFloat64From2dSlice(data)
-	c.Fill(data, minDataPoint, maxDataPoint)
+	c.Fill(data, minDataPoint, maxDataPoint, false)
 	return c.String()
 }
 
-func (c *Canvas) PlotWithMinAndMax(data [][]float64, minDataPoint, maxDataPoint float64) string {
+func (c *Canvas) PlotWithMinAndMax(data [][]float64, minDataPoint, maxDataPoint float64, noYAxisLabelDecimalPoints bool) string {
 	if len(data) == 0 {
 		return ""
 	}
-	c.Fill(data, minDataPoint, maxDataPoint)
+	c.Fill(data, minDataPoint, maxDataPoint, noYAxisLabelDecimalPoints)
 	return c.String()
 }
 
