@@ -22,7 +22,7 @@ func getMinMaxFloat64From2dSlice(slices [][]float64) (float64, float64) {
 	return min, max
 }
 
-func wrap(s string, c Color) string {
+func Wrap(s string, c Color) string {
 	if c == Default {
 		return s
 	}

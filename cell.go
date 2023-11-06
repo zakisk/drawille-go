@@ -42,5 +42,5 @@ func (c Cell) String() string {
 	if c.val+c.offset == 0 {
 		return " "
 	}
-	return wrap(string(c.val+c.offset), c.color)
+	return Wrap(string(c.val+c.offset), c.color)
 }
