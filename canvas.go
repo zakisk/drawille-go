@@ -108,8 +108,8 @@ func (c *Canvas) Fill(data [][]float64, minDataPoint, maxDataPoint float64, noYA
 		}
 		lenMaxDataPoint, lenMinDataPoint := 0, 0
 		if noYAxisLabelDecimalPoints {
-			lenMaxDataPoint = len(fmt.Sprintf("%.0f", maxDataPoint))
-			lenMinDataPoint = len(fmt.Sprintf("%.0f", minDataPoint))
+			lenMaxDataPoint = len(fmt.Sprintf("%d", int64(maxDataPoint)))
+			lenMinDataPoint = len(fmt.Sprintf("%d", int64(minDataPoint)))
 		} else {
 			lenMaxDataPoint = len(fmt.Sprintf("%.2f", maxDataPoint))
 			lenMinDataPoint = len(fmt.Sprintf("%.2f", minDataPoint))
@@ -123,9 +123,9 @@ func (c *Canvas) Fill(data [][]float64, minDataPoint, maxDataPoint float64, noYA
 		for i := c.graphHeight - 1; i >= 0; i-- {
 			val := ""
 			if noYAxisLabelDecimalPoints {
-				val = fmt.Sprintf("%.2f", cur)
-			} else {
 				val = fmt.Sprintf("%.0f", cur)
+			} else {
+				val = fmt.Sprintf("%.2f", cur)
 			}
 			c.setRunes(i, lenMaxDataPoint-len(val), c.LabelColor, NO_OFFSET, []rune(val)...)
 			c.setRunes(i, lenMaxDataPoint+1, c.AxisColor, LINE_OFFSET, YAXIS)
